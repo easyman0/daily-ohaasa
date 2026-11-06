@@ -9,10 +9,20 @@
 
 ## 현재 상태
 
-GitHub 서버 제작 테스트 통과 및 계정 연결 진행 단계입니다. 실제 게시 활성화에는 아래 계정 연결과 최초 검증이 필요합니다.
-`AUTO_PUBLISH`가 `true`가 아니면 예약 작업은 게시하지 않습니다.
-소스 파싱/렌더링/중복 방지 로직을 로컬에서 검증할 수 있지만, Meta API 인증과 실제
-게시 호환성은 사용자 계정으로 최초 실행해야 확인됩니다.
+2026-11-06 검증: Instagram 계정 연결, GitHub의 이미지 5장·10초 영상 제작,
+실제 Meta API의 3:4 이미지 캐러셀·릴스 미게시 컨테이너 처리를 통과했습니다.
+실제 Instagram 게시물은 발행하지 않았습니다.
+
+번역은 초안 생성 후 원문과 대조해 교정합니다. 경량 모델의 행운 아이템 오역을 발견해
+용어집과 교정 단계를 추가했습니다. 상위 무료 모델 검사에서는 503 오류가 반복됐고,
+마지막 Gemini 3.6 Flash 검사에서 429 호출 제한이 발생했습니다.
+현재 저장소 `GEMINI_MODEL`은 `gemini-3.6-flash`이며, 이 모델의 최종 번역 검증은 미완료입니다.
+무료 한도가 회복된 뒤 `Check translation`을 실행해 두 원문 결과를 검토해야 합니다.
+`AUTO_PUBLISH`는 아직 설정하지 않았으므로 예약 게시는 비활성 상태입니다. 유료 결제는 설정하지 않았습니다.
+
+검증 실행: [전체 제작](https://github.com/easyman0/daily-ohaasa/actions/runs/42234643448),
+[Instagram 미게시 처리](https://github.com/easyman0/daily-ohaasa/actions/runs/42235058651),
+[최근 번역 검사](https://github.com/easyman0/daily-ohaasa/actions/runs/42237229135).
 
 ## 생성물
 
