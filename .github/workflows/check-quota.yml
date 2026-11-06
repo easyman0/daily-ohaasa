@@ -1,0 +1,45 @@
+name: Check Gemini quota
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quota:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Inspect one minimal API request
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+        run: |
+          python - <<'PY'
+          import json, os, urllib.request, urllib.error
+          key = os.environ['GEMINI_API_KEY'].strip()
+          model = os.environ['GEMINI_MODEL']
+          req = urllib.request.Request(
+              'https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',
+              data=json.dumps({'contents':[{'parts':[{'text':'Reply OK.'}]}]}).encode(),
+              headers={'x-goog-api-key':key,'Content-Type':'application/json'})
+          report = {'model':model}
+          try:
+              with urllib.request.urlopen(req, timeout=90) as response:
+                  report['http_status'] = response.status
+                  report['result'] = 'Minimal generation succeeded.'
+          except urllib.error.HTTPError as exc:
+              report['http_status'] = exc.code
+              body = json.loads(exc.read())
+              error = body.get('error', {})
+              report['status'] = error.get('status')
+              report['message'] = error.get('message', '').replace(key, '[REDACTED]')
+              report['details'] = [d for d in error.get('details', []) if d.get('@type') in (
+                  'type.googleapis.com/google.rpc.QuotaFailure',
+                  'type.googleapis.com/google.rpc.RetryInfo')]
+          safe = json.dumps(report, ensure_ascii=False, indent=2).replace(key, '[REDACTED]')
+          print(safe)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'w') as f:
+              f.write('```json\n'+safe+'\n```')
+          PY
