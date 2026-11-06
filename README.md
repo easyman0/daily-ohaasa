@@ -9,7 +9,7 @@
 
 ## 현재 상태
 
-코드 준비 단계입니다. 실제 게시 활성화에는 아래 계정 연결과 최초 검증이 필요합니다.
+GitHub 서버 제작 테스트 통과 및 계정 연결 진행 단계입니다. 실제 게시 활성화에는 아래 계정 연결과 최초 검증이 필요합니다.
 `AUTO_PUBLISH`가 `true`가 아니면 예약 작업은 게시하지 않습니다.
 소스 파싱/렌더링/중복 방지 로직을 로컬에서 검증할 수 있지만, Meta API 인증과 실제
 게시 호환성은 사용자 계정으로 최초 실행해야 확인됩니다.
@@ -32,11 +32,11 @@
 2. Google AI Studio에서 **무료 등급 프로젝트**의 Gemini API 키를 발급합니다.
    기본 모델은 `gemini-3.5-flash-lite`. 지역·계정별 사용 가능 여부/무료 한도가 다를 수 있습니다.
    유료 결제를 자동으로 활성화하지 않습니다. 무료 한도 초과 시 해당 실행은 실패합니다.
-3. Meta 개발자 앱의 **Instagram API with Instagram Login**을 설정하고
+3. Meta 개발자 앱의 **Instagram API with Unified Login**을 설정하고
    `daily_ohaasa` 크리에이터 계정으로 승인합니다. 게시 권한
-   `instagram_business_basic`, `instagram_business_content_publish`가 필요합니다.
+   `instagram_basic`, `instagram_content_publish`가 필요합니다.
    개발/테스터 역할 및 앱 검수 요건은 Meta 대시보드에서 해당 계정 조건을 확인합니다.
-4. 새로 발급한 **장기 Instagram User 토큰**과 해당 숫자 User ID를 준비합니다.
+4. 통합 로그인 구성의 **시스템 사용자 토큰**과 해당 Instagram 숫자 User ID를 준비합니다.
    Instagram 비밀번호, Facebook Page 토큰, 예전 Basic Display 토큰을 넣지 마세요.
 5. GitHub 저장소 → Settings → Secrets and variables → Actions에 아래 Secrets를 등록합니다.
 
@@ -44,8 +44,8 @@
 |---|---|
 | `GEMINI_API_KEY` | 무료 Gemini 프로젝트의 API 키 |
 | `IG_USER_ID` | Instagram API가 반환한 해당 계정의 숫자 ID |
-| `IG_ACCESS_TOKEN` | 새 장기 Instagram Login 토큰 |
-| `STATE_ENCRYPTION_KEY` | 아래 명령으로 만든 Fernet 키 |
+| `IG_ACCESS_TOKEN` | 통합 로그인 시스템 사용자 토큰 |
+| `STATE_ENCRYPTION_KEY` | 기존 Instagram Login 방식에만 필요한 Fernet 키. 통합 로그인에서는 불필요 |
 
 키 생성: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`
 키는 채팅·소스·스크린샷에 올리지 말고 GitHub Secret 입력란에 직접 넣으세요.
@@ -63,13 +63,16 @@
 5. 즉시 게시 테스트는 07:00–10:00 KST에 Run workflow의 `publish`로 실행합니다.
    이는 공개 카드 게시물과 릴스를 각각 하나 게시합니다. 별도 가짜 날짜 테스트는 지원하지 않습니다.
 
-선택 Variables: `GEMINI_MODEL`(기본 `gemini-3.5-flash-lite`), `IG_API_VERSION`(기본 `v25.0`).
+선택 Variables: `GEMINI_MODEL`(기본 `gemini-3.5-flash-lite`), `IG_API_VERSION`(기본 `v27.0`), `IG_LOGIN_MODE`(기본 `unified`).
 GitHub 기본 `GITHUB_TOKEN`이 저장소 contents 쓰기 권한을 가져야 상태와 미디어를 저장할 수 있습니다.
 
 ## 지속 운영
 
-토큰은 7일마다 갱신하고 암호화한 값을 `.state/auth.json`에 저장합니다.
-암호화 키는 GitHub Secrets에만 두며, 액세스 토큰 평문은 저장소나 로그에 쓰지 않습니다.
+현재 통합 로그인 구성은 60일 만료입니다. 통합 로그인 토큰의 자동 갱신은 아직 구현되지
+않았으므로 만료 전에 새 토큰으로 GitHub Secret을 갱신해야 합니다. 연결 완료만으로
+지속 운영 설정이 완료된 것은 아닙니다. 통합 로그인은 graph.facebook.com을 사용합니다.
+기존 Instagram Login을 명시적으로 선택한 경우에만 7일마다 갱신하고 암호화한 값을
+.state/auth.json에 저장합니다. 액세스 토큰 평문은 저장소나 로그에 쓰지 않습니다.
 Meta 권한 철회·비밀번호 변경·만료 등으로 연결이 끊기면 사용자 재인증이 필요합니다.
 새 토큰을 `IG_ACCESS_TOKEN`에 등록하면 다음 실행에서 새 연결로 인식합니다.
 
