@@ -1,0 +1,41 @@
+name: Check translation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  translation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install requests==2.32.5 beautifulsoup4==4.14.3
+      - name: Translate current source
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+        run: |
+          python - <<'PY'
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+          from pathlib import Path
+          import json
+          from ohaasa.sources import fetch
+          from ohaasa.translate import translate
+          today = datetime.now(ZoneInfo('Asia/Seoul')).date()
+          try:
+              data = translate(fetch(today))
+          except Exception as exc:
+              print(f'ERROR: {type(exc).__name__}: {exc}')
+              raise SystemExit(1)
+          Path('translation-review.json').write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
+          print('Successfully translated and validated all 12 signs. No Instagram post was made.')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: translation-review
+          path: translation-review.json
+          retention-days: 3
