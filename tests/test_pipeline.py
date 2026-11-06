@@ -60,6 +60,14 @@ class Sources(unittest.TestCase):
         translated['rows'][0]['rank']=2
         with self.assertRaises(ValueError):validate_translation(translated,source)
 
+    def test_risotto_is_not_a_resort(self):
+        source={'source':'ohaasa','rows':parse_abc(json.dumps(abc_fixture()),date(2026,11,6))}
+        source['rows'][0]['item']='リゾット'
+        translated={'rows':[{'rank':i+1,'sign':s,'lines':['좋은 하루예요.','차분히 지내요.'],'item':'리조트','color':''} for i,s in enumerate(SIGNS)]}
+        result=validate_translation(translated,source)
+        self.assertEqual(result['rows'][0]['item'],'리소토')
+        self.assertEqual(result['rows'][1]['item'],'리조트')
+
 
 class Authentication(unittest.TestCase):
     def test_unified_token_never_uses_legacy_refresh_or_public_state(self):
