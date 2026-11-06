@@ -8,6 +8,12 @@ HINT_GLOSSARY = {'リゾット': '리소토', '和菓子': '화과자',
 
 
 def validate_translation(data, source):
+    # Some JSON-mode responses return the requested rows as a top-level array.
+    # Accept only this equivalent wrapper; keep all row/content checks below.
+    if isinstance(data, list):
+        data = {'rows': data}
+    if not isinstance(data, dict):
+        raise ValueError('Translation response must contain rows.')
     rows = data.get('rows', [])
     if len(rows) != 12:
         raise ValueError('Translation must contain twelve rows.')
