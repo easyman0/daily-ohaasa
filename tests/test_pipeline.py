@@ -2,10 +2,12 @@ import copy
 from datetime import date,datetime,timezone
 import json
 import unittest
+import os
+from unittest.mock import patch, Mock
 
 from ohaasa.sources import parse_abc,parse_gogo,source_for,NotReady,SIGNS,JP
 from ohaasa.translate import validate_translation
-from ohaasa.instagram import publish_kind
+from ohaasa.instagram import publish_kind, active_token, Instagram
 from ohaasa.main import publish_window
 
 
@@ -57,6 +59,24 @@ class Sources(unittest.TestCase):
         validate_translation(translated,source)
         translated['rows'][0]['rank']=2
         with self.assertRaises(ValueError):validate_translation(translated,source)
+
+
+class Authentication(unittest.TestCase):
+    def test_unified_token_never_uses_legacy_refresh_or_public_state(self):
+        with patch.dict(os.environ, {'IG_LOGIN_MODE':'unified','IG_ACCESS_TOKEN':'test-secret'}, clear=True):
+            github=Mock()
+            with patch('ohaasa.instagram.requests.get') as refresh:
+                self.assertEqual(active_token(github),'test-secret')
+                refresh.assert_not_called()
+            github.read.assert_not_called()
+            github.save.assert_not_called()
+            self.assertEqual(Instagram('test-secret','123').base,'https://graph.facebook.com/v27.0')
+
+    def test_legacy_host_and_invalid_mode(self):
+        with patch.dict(os.environ, {'IG_LOGIN_MODE':'instagram'}, clear=True):
+            self.assertEqual(Instagram('test','123').base,'https://graph.instagram.com/v27.0')
+        with patch.dict(os.environ, {'IG_LOGIN_MODE':'invalid'}, clear=True):
+            with self.assertRaises(ValueError): Instagram('test','123')
 
 
 class FakeAPI:
