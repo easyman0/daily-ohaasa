@@ -27,7 +27,9 @@ def validate_translation(data, source):
 
 
 def translate(source):
-    key = os.environ['GEMINI_API_KEY']
+    key = os.environ['GEMINI_API_KEY'].strip()
+    if not key or any(c.isspace() for c in key):
+        raise ValueError('GEMINI_API_KEY contains invalid whitespace.')
     model = os.getenv('GEMINI_MODEL') or 'gemini-3.5-flash-lite'
     if not re.fullmatch(r'[a-zA-Z0-9.\-]+', model):
         raise ValueError('Invalid model name.')
@@ -43,10 +45,13 @@ Return JSON only: {"rows":[{"rank":1,"sign":"...","lines":["...","..."],
 SOURCE:\n''' + json.dumps(source, ensure_ascii=False)
     # Official REST generateContent interface. Never log the request headers or key.
     url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
-    response = requests.post(url, headers={'x-goog-api-key': key}, json={
-        'contents':[{'parts':[{'text':prompt}]}],
-        'generationConfig':{'temperature':0.1,'responseMimeType':'application/json',
-                            'maxOutputTokens':8192}}, timeout=(15, 120))
+    try:
+        response = requests.post(url, headers={'x-goog-api-key': key}, json={
+            'contents':[{'parts':[{'text':prompt}]}],
+            'generationConfig':{'temperature':0.1,'responseMimeType':'application/json',
+                                'maxOutputTokens':8192}}, timeout=(15, 120))
+    except (requests.RequestException, ValueError):
+        raise RuntimeError('Translation API request failed; check key format and connection.') from None
     if response.status_code != 200:
         raise RuntimeError(f'Translation API failed ({response.status_code}); check free quota/model/key.')
     result = response.json()
