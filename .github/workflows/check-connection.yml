@@ -1,0 +1,33 @@
+name: Check Instagram connection
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Verify target account without publishing
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_LOGIN_MODE: unified
+          IG_USERNAME: daily_ohaasa
+        run: |
+          python - <<'PY'
+          import os
+          from ohaasa.instagram import Instagram
+          try:
+              Instagram(os.environ['IG_ACCESS_TOKEN']).verify_account()
+          except Exception as exc:
+              print('Connection check failed: ' + str(exc))
+              raise SystemExit(1)
+          print('Verified @daily_ohaasa. No content was created or published.')
+          PY
