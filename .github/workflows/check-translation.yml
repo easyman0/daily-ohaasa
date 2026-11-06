@@ -2,6 +2,11 @@ name: Check translation
 on:
   workflow_dispatch:
     inputs:
+      review_source:
+        description: 'Sources to review'
+        type: choice
+        options: [both, ohaasa, gogo]
+        default: both
       review_date:
         description: 'Review-only source date (YYYY-MM-DD); never publishes'
         required: false
@@ -14,7 +19,7 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix:
-        source: [ohaasa, gogo]
+        source: ${{ fromJSON(inputs.review_source == 'gogo' && '["gogo"]' || inputs.review_source == 'ohaasa' && '["ohaasa"]' || '["ohaasa","gogo"]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
