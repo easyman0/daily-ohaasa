@@ -9,6 +9,17 @@
 
 ## 현재 상태
 
+**2026-11-07 00:22 KST 최신 검증:** 평일 12개 번역을 원문과 대조하고 카드 5장·10초 영상
+제작을 확인했습니다. 원문 기호/영어가 남는 미완성 문장을 교정하도록 지침을 강화하고,
+주말 색상에 일본어가 남으면 차단하며 릴스 캡션의 조사를 수정했습니다. 로컬 회귀 검사 16개가
+통과했습니다(미디어 통합 테스트 1개는 별도 클라우드 실행 대상).
+주말 최종 검증은 Gemini 3.6 Flash 무료 일일 20회 제한으로 중단되었습니다.
+[상세 오류](https://github.com/easyman0/daily-ohaasa/actions/runs/42242155775/job/127974919463#step:5:36)의
+`GenerateRequestsPerDayPerProjectPerModel-FreeTier`, `quotaValue: 20`, `retryDelay: 59918s`를 확인했습니다.
+해제 예상은 2026-11-07 17:00 KST입니다. `AUTO_PUBLISH`는 설정하지 않았습니다.
+한도 회복 후 `Check translation`의 `review_source=gogo`로 주말 12개를 원문과 대조하고,
+카드/영상을 검토한 후에만 활성화하세요. 아래 내용은 이전 단계의 이력입니다.
+
 2026-11-06 검증: Instagram 계정 연결, GitHub의 이미지 5장·10초 영상 제작,
 실제 Meta API의 3:4 이미지 캐러셀·릴스 미게시 컨테이너 처리를 통과했습니다.
 실제 Instagram 게시물은 발행하지 않았습니다.
