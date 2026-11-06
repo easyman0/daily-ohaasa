@@ -6,7 +6,7 @@ import os
 from unittest.mock import patch, Mock
 
 from ohaasa.sources import parse_abc,parse_gogo,source_for,NotReady,SIGNS,JP
-from ohaasa.translate import validate_translation
+from ohaasa.translate import validate_translation, translate
 from ohaasa.instagram import publish_kind, active_token, Instagram
 from ohaasa.main import publish_window
 
@@ -67,6 +67,21 @@ class Sources(unittest.TestCase):
         result=validate_translation(translated,source)
         self.assertEqual(result['rows'][0]['item'],'리소토')
         self.assertEqual(result['rows'][1]['item'],'리조트')
+
+    def test_only_reviewed_translation_is_returned(self):
+        source={'source':'ohaasa','rows':parse_abc(json.dumps(abc_fixture()),date(2026,11,6))}
+        draft={'rows':[{'rank':i+1,'sign':s,'lines':['좋은 하루예요.','차분히 지내요.'],'item':'잘못된 힌트','color':''} for i,s in enumerate(SIGNS)]}
+        reviewed=copy.deepcopy(draft)
+        for row in reviewed['rows']: row['item']='파란색'
+        with patch.dict(os.environ, {'GEMINI_API_KEY':'test'}):
+            with patch('ohaasa.translate._generate',side_effect=[draft,reviewed]) as generate:
+                result=translate(source)
+        self.assertEqual(result['rows'][0]['item'],'파란색')
+        self.assertIn('ORIGINAL:',generate.call_args_list[1].args[0])
+        reviewed['rows'][0]['rank']=2
+        with patch.dict(os.environ, {'GEMINI_API_KEY':'test'}):
+            with patch('ohaasa.translate._generate',side_effect=[draft,reviewed]):
+                with self.assertRaises(ValueError): translate(source)
 
 
 class Authentication(unittest.TestCase):
