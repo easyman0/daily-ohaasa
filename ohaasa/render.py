@@ -208,5 +208,6 @@ def captions(data):
     post=title+f'\n\n오늘의 1위는 {row["sign"]} {symbols[row["sign"]]}\n'+'\n'.join(row['lines'])
     particle='을' if data['source']=='gogo' else '를'
     post+=f'\n\n옆으로 넘기면 12개 별자리의 운세와\n{hints}{particle} 확인할 수 있어요.\n\n'+ending
-    reel=title+f'\n\n오늘 내 별자리는 몇 위인가요? ✨\n\n별자리별 자세한 운세와 {hints}는\n프로필 @daily_ohaasa → 오늘의 게시물에서 확인해 주세요.\n\n'+ending
+    topic='은' if data['source']=='gogo' else '는'
+    reel=title+f'\n\n오늘 내 별자리는 몇 위인가요? ✨\n\n별자리별 자세한 운세와 {hints}{topic}\n프로필 @daily_ohaasa → 오늘의 게시물에서 확인해 주세요.\n\n'+ending
     return {'carousel':post,'reel':reel}
