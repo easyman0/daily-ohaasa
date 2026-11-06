@@ -101,7 +101,17 @@ def _generate(prompt, key, model):
     except (requests.RequestException, ValueError):
         raise RuntimeError('Translation API request failed; check key format and connection.') from None
     if response.status_code != 200:
-        raise RuntimeError(f'Translation API failed ({response.status_code}); check free quota/model/key.')
+        detail = ''
+        if response.status_code == 429:
+            try:
+                error = response.json().get('error', {})
+                allowed = [d for d in error.get('details', []) if d.get('@type') in (
+                    'type.googleapis.com/google.rpc.QuotaFailure',
+                    'type.googleapis.com/google.rpc.RetryInfo')]
+                detail = json.dumps(allowed, ensure_ascii=False).replace(key, '[REDACTED]')
+            except (ValueError, AttributeError, TypeError):
+                detail = 'Quota details unavailable.'
+        raise RuntimeError(f'Translation API failed ({response.status_code}); check free quota/model/key. {detail}')
     result = response.json()
     try:
         candidate = result['candidates'][0]
