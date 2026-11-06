@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import time
 import requests
 
 HINT_GLOSSARY = {'リゾット': '리소토', '和菓子': '화과자',
@@ -79,10 +80,14 @@ def _generate(prompt, key, model):
     # Official REST generateContent interface. Never log the request headers or key.
     url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
     try:
-        response = requests.post(url, headers={'x-goog-api-key': key}, json={
-            'contents':[{'parts':[{'text':prompt}]}],
-            'generationConfig':{'temperature':0.1,'responseMimeType':'application/json',
-                                'maxOutputTokens':8192}}, timeout=(15, 120))
+        for attempt in range(3):
+            response = requests.post(url, headers={'x-goog-api-key': key}, json={
+                'contents':[{'parts':[{'text':prompt}]}],
+                'generationConfig':{'temperature':0.1,'responseMimeType':'application/json',
+                                    'maxOutputTokens':8192}}, timeout=(15, 120))
+            if response.status_code not in (500, 502, 503, 504) or attempt == 2:
+                break
+            time.sleep(5 * (attempt + 1))
     except (requests.RequestException, ValueError):
         raise RuntimeError('Translation API request failed; check key format and connection.') from None
     if response.status_code != 200:
