@@ -1,12 +1,18 @@
 name: Check translation
 on:
   workflow_dispatch:
+    inputs:
+      review_date:
+        description: 'Review-only source date (YYYY-MM-DD); never publishes'
+        required: false
+        type: string
 permissions:
   contents: read
 jobs:
   translation:
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         source: [ohaasa, gogo]
     runs-on: ubuntu-latest
@@ -22,22 +28,27 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           SOURCE: ${{ matrix.source }}
+          REVIEW_DATE: ${{ inputs.review_date }}
         run: |
           python - <<'PY'
-          from datetime import datetime
+          from datetime import datetime, date
           from zoneinfo import ZoneInfo
           from pathlib import Path
           import json, os
           from ohaasa.sources import fetch
           from ohaasa.translate import translate
           today = datetime.now(ZoneInfo('Asia/Seoul')).date()
+          if os.environ.get('REVIEW_DATE'):
+              today = date.fromisoformat(os.environ['REVIEW_DATE'])
           try:
-              data = translate(fetch(today, os.environ['SOURCE']))
+              original = fetch(today, os.environ['SOURCE'])
+              data = translate(original)
           except Exception as exc:
               print(f'ERROR: {type(exc).__name__}: {exc}')
               raise SystemExit(1)
           Path('translation-review.json').write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
-          Path(os.environ['GITHUB_STEP_SUMMARY']).write_text('Reviewed translation:\n\n```json\n'+json.dumps(data,ensure_ascii=False,indent=2)+'\n```',encoding='utf-8')
+          review = {'original': original, 'translation': data}
+          Path(os.environ['GITHUB_STEP_SUMMARY']).write_text('Original and reviewed translation:\n\n```json\n'+json.dumps(review,ensure_ascii=False,indent=2)+'\n```',encoding='utf-8')
           print('Successfully translated and validated all 12 signs. No Instagram post was made.')
           PY
       - uses: actions/upload-artifact@v4
