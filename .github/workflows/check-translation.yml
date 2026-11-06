@@ -5,6 +5,10 @@ permissions:
   contents: read
 jobs:
   translation:
+    strategy:
+      fail-fast: false
+      matrix:
+        source: [ohaasa, gogo]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -17,6 +21,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          SOURCE: ${{ matrix.source }}
         run: |
           python - <<'PY'
           from datetime import datetime
@@ -27,7 +32,7 @@ jobs:
           from ohaasa.translate import translate
           today = datetime.now(ZoneInfo('Asia/Seoul')).date()
           try:
-              data = translate(fetch(today))
+              data = translate(fetch(today, os.environ['SOURCE']))
           except Exception as exc:
               print(f'ERROR: {type(exc).__name__}: {exc}')
               raise SystemExit(1)
@@ -37,7 +42,7 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: translation-review
+          name: translation-review-${{ matrix.source }}
           path: translation-review.json
           retention-days: 3
 
