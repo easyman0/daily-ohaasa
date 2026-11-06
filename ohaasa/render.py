@@ -26,7 +26,11 @@ def font_file(weight):
              'bold':'/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc',
              'number':'/usr/share/fonts/truetype/liberation2/LiberationSerif-Regular.ttf'}[weight]
     if not Path(cloud).exists():
-        raise FileNotFoundError('Install fonts-noto-cjk and fonts-liberation2.')
+        filename = Path(cloud).name
+        matches = sorted(Path('/usr/share/fonts').rglob(filename))
+        if not matches:
+            raise FileNotFoundError('Required font missing: ' + filename)
+        return str(matches[0])
     return cloud
 
 
