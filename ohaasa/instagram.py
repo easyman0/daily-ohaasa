@@ -7,9 +7,22 @@ import requests
 from cryptography.fernet import Fernet
 
 
+def login_mode():
+    mode = os.getenv('IG_LOGIN_MODE') or 'unified'
+    if mode not in ('unified', 'instagram'):
+        raise ValueError('IG_LOGIN_MODE must be unified or instagram.')
+    return mode
+
+
 def active_token(github):
     """Persist refreshed tokens encrypted; never commit plaintext tokens."""
     seed=os.environ['IG_ACCESS_TOKEN']
+    # Unified Login uses a business integration system-user token, not an
+    # Instagram user token. Never send it to the legacy refresh endpoint.
+    # Keep it only in Actions Secrets. The configured token expires in 60 days;
+    # unified-token renewal must be configured separately before that deadline.
+    if login_mode() == 'unified':
+        return seed
     cipher=Fernet(os.environ['STATE_ENCRYPTION_KEY'].encode())
     fingerprint=hashlib.sha256(seed.encode()).hexdigest()
     saved,_=github.read('.state/auth.json')
@@ -39,8 +52,9 @@ def active_token(github):
 class Instagram:
     def __init__(self,token,user_id=None):
         self.user_id=user_id or os.environ['IG_USER_ID']
-        version=os.getenv('IG_API_VERSION') or 'v25.0'
-        self.base='https://graph.instagram.com/'+version
+        version=os.getenv('IG_API_VERSION') or 'v27.0'
+        host = 'graph.facebook.com' if login_mode() == 'unified' else 'graph.instagram.com'
+        self.base='https://'+host+'/'+version
         self.session=requests.Session()
         self.session.headers['Authorization']='Bearer '+token
 
