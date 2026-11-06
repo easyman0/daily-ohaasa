@@ -70,6 +70,16 @@ class Sources(unittest.TestCase):
         self.assertEqual(result['rows'][0]['item'],'리소토')
         self.assertEqual(result['rows'][1]['item'],'리조트')
 
+    def test_untranslated_color_and_source_symbols_block_publication(self):
+        source={'source':'gogo','rows':parse_gogo(gogo_fixture(),date(2026,11,7))}
+        data={'rows':[{'rank':i+1,'sign':s,'lines':['좋은 하루예요.','차분히 지내요.'],'item':'카페','color':'파란색'} for i,s in enumerate(SIGNS)]}
+        validate_translation(data,source)
+        data['rows'][0]['color']='ブルー'
+        with self.assertRaises(ValueError): validate_translation(data,source)
+        data['rows'][0]['color']='파란색'
+        data['rows'][0]['lines'][1]='함께하면 ◎'
+        with self.assertRaises(ValueError): validate_translation(data,source)
+
     def test_only_reviewed_translation_is_returned(self):
         source={'source':'ohaasa','rows':parse_abc(json.dumps(abc_fixture()),date(2026,11,6))}
         draft={'rows':[{'rank':i+1,'sign':s,'lines':['좋은 하루예요.','차분히 지내요.'],'item':'잘못된 힌트','color':''} for i,s in enumerate(SIGNS)]}
