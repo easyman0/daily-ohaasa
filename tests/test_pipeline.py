@@ -57,8 +57,10 @@ class Sources(unittest.TestCase):
         source={'source':'ohaasa','rows':parse_abc(json.dumps(abc_fixture()),date(2026,11,6))}
         translated={'rows':[{'rank':i+1,'sign':s,'lines':['좋은 하루예요.','차분히 지내요.'],'item':'파란색','color':''} for i,s in enumerate(SIGNS)]}
         validate_translation(translated,source)
+        self.assertEqual(len(validate_translation(translated['rows'],source)['rows']),12)
         translated['rows'][0]['rank']=2
         with self.assertRaises(ValueError):validate_translation(translated,source)
+        with self.assertRaises(ValueError):validate_translation(translated['rows'],source)
 
     def test_risotto_is_not_a_resort(self):
         source={'source':'ohaasa','rows':parse_abc(json.dumps(abc_fixture()),date(2026,11,6))}
