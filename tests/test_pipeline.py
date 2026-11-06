@@ -6,7 +6,7 @@ import os
 from unittest.mock import patch, Mock
 
 from ohaasa.sources import parse_abc,parse_gogo,source_for,NotReady,SIGNS,JP
-from ohaasa.translate import validate_translation, translate
+from ohaasa.translate import validate_translation, translate, _generate
 from ohaasa.instagram import publish_kind, active_token, Instagram
 from ohaasa.main import publish_window
 
@@ -102,6 +102,20 @@ class Authentication(unittest.TestCase):
             self.assertEqual(Instagram('test','123').base,'https://graph.instagram.com/v27.0')
         with patch.dict(os.environ, {'IG_LOGIN_MODE':'invalid'}, clear=True):
             with self.assertRaises(ValueError): Instagram('test','123')
+
+
+class TranslationService(unittest.TestCase):
+    def test_transient_server_error_is_retried_but_auth_error_is_not(self):
+        unavailable=Mock(status_code=503)
+        success=Mock(status_code=200)
+        success.json.return_value={'candidates':[{'finishReason':'STOP','content':{'parts':[{'text':'{"rows":[]}'}]}}]}
+        with patch('ohaasa.translate.requests.post',side_effect=[unavailable,success]) as post:
+            with patch('ohaasa.translate.time.sleep'):
+                self.assertEqual(_generate('prompt','secret','model'),{'rows':[]})
+                self.assertEqual(post.call_count,2)
+        with patch('ohaasa.translate.requests.post',return_value=Mock(status_code=403)) as post:
+            with self.assertRaises(RuntimeError): _generate('prompt','secret','model')
+            self.assertEqual(post.call_count,1)
 
 
 class FakeAPI:
