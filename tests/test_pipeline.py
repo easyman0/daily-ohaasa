@@ -6,7 +6,7 @@ import os
 from unittest.mock import patch, Mock
 
 from ohaasa.sources import parse_abc,parse_gogo,source_for,NotReady,SIGNS,JP
-from ohaasa.translate import validate_translation, translate, _generate
+from ohaasa.translate import validate_translation, translate, _generate, _generate_openai
 from ohaasa.instagram import publish_kind, active_token, Instagram
 from ohaasa.main import publish_window
 
@@ -115,6 +115,20 @@ class Authentication(unittest.TestCase):
 
 
 class TranslationService(unittest.TestCase):
+    def test_openai_complete_refusal_and_incomplete(self):
+        response=Mock(status_code=200)
+        response.json.return_value={'status':'completed','output':[{'type':'message','content':[{'type':'output_text','text':'{"rows":[]}'}]}]}
+        with patch('ohaasa.translate.requests.post',return_value=response) as post:
+            self.assertEqual(_generate_openai('prompt','secret','model'),{'rows':[]})
+            self.assertFalse(post.call_args.kwargs['json']['store'])
+            response.json.return_value['status']='incomplete'
+            with self.assertRaises(ValueError): _generate_openai('prompt','secret','model')
+            response.json.return_value={'status':'completed','output':[{'type':'message','content':[{'type':'refusal','refusal':'no'}]}]}
+            with self.assertRaises(ValueError): _generate_openai('prompt','secret','model')
+        with patch('ohaasa.translate.requests.post',return_value=Mock(status_code=429)) as post:
+            with self.assertRaises(RuntimeError): _generate_openai('prompt','secret','model')
+            self.assertEqual(post.call_count,1)
+
     def test_transient_server_error_is_retried_but_auth_error_is_not(self):
         unavailable=Mock(status_code=503)
         success=Mock(status_code=200)
