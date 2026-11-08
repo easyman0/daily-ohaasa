@@ -31,7 +31,7 @@ jobs:
       - name: Translate current source
         env:
           TRANSLATION_PROVIDER: openai
-          OPENAI_MODEL: gpt-5.4-mini-2026-03-17
+          OPENAI_MODEL: gpt-6.1-terra
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
