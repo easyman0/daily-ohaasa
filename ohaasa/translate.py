@@ -48,7 +48,7 @@ def translate(source):
     key = os.environ[key_name].strip()
     if not key or any(c.isspace() for c in key):
         raise ValueError('Translation API key contains invalid whitespace.')
-    model = (os.getenv('OPENAI_MODEL') or 'gpt-5.4-mini-2026-03-17') if provider == 'openai' else (os.getenv('GEMINI_MODEL') or 'gemini-3.5-flash-lite')
+    model = (os.getenv('OPENAI_MODEL') or 'gpt-6.1-terra') if provider == 'openai' else (os.getenv('GEMINI_MODEL') or 'gemini-3.5-flash-lite')
     generate = _generate_openai if provider == 'openai' else _generate
     if not re.fullmatch(r'[a-zA-Z0-9.\-]+', model):
         raise ValueError('Invalid model name.')
@@ -61,7 +61,7 @@ Use warm everyday Korean: 前向き means 긍정적인, 身だしなみ means �
 どっしり構えて means 마음의 여유를 가져요. Avoid awkward literal phrasing.
 Food glossary: リゾット = 리소토 (risotto, never 리조트), 和菓子 = 화과자.
 Condense only the supplied body into 2–3 short lines,
-each preferably <= 29 Korean characters. Preserve important cautions and meaning.
+each preferably <= 29 Korean characters. Preserve ALL predictions, advice, cautions, timing and conditions. Combine related clauses into three lines rather than dropping a detail. A line can be up to 45 Korean characters when necessary.
 Translate item literally: it can be an object, place, activity or person. Do not turn
 activities into invented objects. Translate color; if source color is empty return "".
 Return JSON only: {"rows":[{"rank":1,"sign":"...","lines":["...","..."],
@@ -83,7 +83,12 @@ GOOD, ◎, ○, ♪, ♥ 등 원문의 기호는 제거하고 뜻을 한국어 �
 예: 幸運に恵まれる1日に → 행운이 따르는 하루가 될 거예요.
 기쁜 초대에 대한 기대감이 커요 같은 직역 대신 기분 좋은 초대를 기대해도 좋아요처럼 쓰세요.
 색상은 일상적인 한국어 색 이름으로 번역하세요: 水色=하늘색, 茶色=갈색, 紺色=남색.
-최종 제출 전에 12개 별자리 각각의 모든 문장과 힌트를 원문과 다시 대조하세요.
+최종 제출 전에 원문의 모든 절을 하나씩 최종 번역과 대조하세요. 특히 마지막 문장, 시간, 조건, 부정, 주의사항을 생략하면 안 됩니다.
+3줄 제한을 지키기 위해 관련된 내용을 한 문장으로 합치되, 핵심 의미는 전부 보존하세요. 필요하면 한 줄 45자까지 허용합니다.
+本番=실전 (본심이 아님), 夕方までには帰宅を=저녁까지는 귀가하세요. 交通機関の乱れ=교통편 운행 차질.
+한국어로 다시 읽고 어색한 조사와 직역을 고치세요. 現状維持でも大丈夫=지금 상태를 유지하는 것만으로도 괜찮아요.
+フライドポテト=감자튀김, ミネラルウォーター=생수, マルシェ=장터, リサイクル店=중고 매장.
+원문의 가능성 표현을 확정적인 예언으로 바꾸지 마세요.
 Preserve rank/sign and return the same JSON rows schema with lines, item and color.
 Translate colors exactly; preserve empty colors. Return JSON only.
 ORIGINAL:\n''' + json.dumps(source, ensure_ascii=False) + '\nDRAFT:\n' + json.dumps(draft, ensure_ascii=False)
@@ -104,7 +109,7 @@ def _generate_openai(prompt, key, model):
             response = requests.post('https://api.openai.com/v1/responses',
                 headers={'Authorization': 'Bearer ' + key}, json={
                     'model': model, 'input': prompt, 'store': False,
-                    'reasoning': {'effort': 'low'}, 'max_output_tokens': 8192,
+                    'reasoning': {'effort': 'medium'}, 'max_output_tokens': 8192,
                     'text': {'format': {'type': 'json_schema', 'name': 'horoscopes',
                                         'strict': True, 'schema': schema}}}, timeout=(15, 180))
             if response.status_code not in (500, 502, 503, 504) or attempt == 2:
