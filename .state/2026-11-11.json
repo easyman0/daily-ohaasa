@@ -158,6 +158,9 @@
   },
   "reel": {
     "container": "17955759645290988",
-    "attempted": true
+    "attempted": true,
+    "status": "published",
+    "media_id": "18037077083891230",
+    "published_at": "2026-11-10T22:31:14.929991+00:00"
   }
 }
