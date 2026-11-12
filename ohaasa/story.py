@@ -1,5 +1,4 @@
 """Publish one dated story after both daily posts, using the same durable state."""
-import json
 import os
 from datetime import datetime
 from pathlib import Path
@@ -94,8 +93,7 @@ def main():
         return
     api=Instagram(active_token(github))
     api.verify_account()
-    account=api.request('GET', api.user_id, params={'fields':'account_type'})
-    print('Instagram account type:', account.get('account_type','unknown'))
+    print('Instagram account verified; preparing today\'s story.')
     if not state.get('story_image'):
         image=render_story(state['content'], Path('build')/str(day)/'story.jpg')
         state['story_image']=github.release_assets(str(day), [image])['story.jpg']
