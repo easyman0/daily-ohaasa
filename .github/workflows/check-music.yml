@@ -1,0 +1,60 @@
+name: Check reel music
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Search available music without publishing
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_USERNAME: daily_ohaasa
+          IG_LOGIN_MODE: ${{ vars.IG_LOGIN_MODE || 'unified' }}
+          IG_API_VERSION: ${{ vars.IG_API_VERSION }}
+        run: |
+          python - <<'PY'
+          import os, json, re
+          from urllib.parse import urlparse
+          from ohaasa.instagram import Instagram
+          api = Instagram(os.environ['IG_ACCESS_TOKEN'])
+          api.verify_account()
+          summary = ['# Available reel music', 'Read-only search for @daily_ohaasa. No media created or published.']
+          def safe(value):
+              value = str(value or '').replace(os.environ['IG_ACCESS_TOKEN'], '[redacted]').replace(os.environ['IG_USER_ID'], '[account]')
+              return re.sub(r'[\r\n|<>]', ' ', value)[:250]
+          for query in ('piano', 'lofi', 'jazz'):
+              response = api.session.get(api.base + '/ig_audio', params={'audio_type':'music','user_id':api.user_id,'search_query':query}, timeout=(15,60))
+              payload = response.json()
+              if not response.ok:
+                  error = payload.get('error', {})
+                  detail = {k:safe(error.get(k)) for k in ('code','error_subcode','type','message')}
+                  line = 'Music lookup failed: HTTP ' + str(response.status_code) + ' ' + json.dumps(detail)
+                  print(line)
+                  summary.append(line)
+                  break
+              rows = payload.get('audio', payload.get('data', []))
+              if not isinstance(rows, list):
+                  raise ValueError('Unexpected music result format')
+              summary.extend(['', '## '+query, '|Title|Artist|Audio ID|Preview|', '|---|---|---|---|'])
+              for row in rows[:20]:
+                  link = row.get('on_platform_audio_preview_link') or ''
+                  parsed = urlparse(link)
+                  if parsed.scheme == 'https' and parsed.hostname in ('www.instagram.com','instagram.com'):
+                      link = 'https://www.instagram.com' + parsed.path
+                  else:
+                      link = ''
+                  summary.append('|'+ '|'.join(safe(v) for v in (row.get('title'),row.get('display_artist'),row.get('audio_id'),link))+'|')
+              print('Search',query,':',len(rows),'results')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as f:
+              f.write('\n'.join(summary)+'\n')
+          PY
