@@ -45,7 +45,13 @@ jobs:
               result=dict(track,container=container,status='CREATED')
               results.append(result)
               Path('build/music-test.json').write_text(json.dumps(results,indent=2))
-              result['status']=api.wait(container)
+              try:
+                  result['status']=api.wait(container)
+              except RuntimeError:
+                  detail=api.request('GET',container,params={'fields':'status_code,status'})
+                  message=str(detail.get('status','')).replace(os.environ['IG_ACCESS_TOKEN'],'[redacted]').replace(os.environ['IG_USER_ID'],'[account]')
+                  print('Container diagnostic:',detail.get('status_code'),message[:1000],flush=True)
+                  raise SystemExit('Music container processing failed; automatic music remains disabled.')
               Path('build/music-test.json').write_text(json.dumps(results,indent=2))
               if result['status']!='FINISHED':raise SystemExit('Unexpected test container state')
               print('PASS:',track['title'],result['status'],flush=True)
