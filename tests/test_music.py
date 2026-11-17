@@ -3,13 +3,32 @@ from datetime import date, timedelta
 import json
 import os
 import unittest
+import subprocess
+import tempfile
+from pathlib import Path
+import imageio_ffmpeg
 from unittest.mock import patch
-from ohaasa.music import selected_track, TRACKS
+from ohaasa.music import selected_track, TRACKS, prepare_audio_stream
 from ohaasa.instagram import publish_kind
 from tests.test_pipeline import FakeAPI
 
 
 class Music(unittest.TestCase):
+    def test_silent_aac_preserves_video_frames(self):
+        ffmpeg=imageio_ffmpeg.get_ffmpeg_exe()
+        with tempfile.TemporaryDirectory() as temp:
+            path=Path(temp)/'reel.mp4'
+            subprocess.run([ffmpeg,'-y','-f','lavfi','-i','color=c=black:s=108x192:r=30:d=10','-an','-c:v','libx264',str(path)],check=True,capture_output=True)
+            def frames():
+                return subprocess.run([ffmpeg,'-i',str(path),'-map','0:v:0','-f','framemd5','-'],check=True,capture_output=True).stdout
+            before=frames()
+            prepare_audio_stream(path)
+            self.assertEqual(frames(),before)
+            probe=subprocess.run([ffmpeg,'-i',str(path),'-f','null','-'],check=True,capture_output=True)
+            self.assertIn(b'Audio: aac',probe.stderr)
+            self.assertIn(b'48000 Hz, stereo',probe.stderr)
+            self.assertIn(b'Duration: 00:00:10.0',probe.stderr)
+
     def test_start_date_and_weekday_rotation(self):
         with patch.dict(os.environ, {'REEL_MUSIC': 'true'}):
             self.assertIsNone(selected_track('2026-11-17'))
