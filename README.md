@@ -1,5 +1,21 @@
 # daily_ohaasa 자동 제작·게시
 
+## 릴스 요일별 배경음악 (2026-11-18 KST부터)
+
+`REEL_MUSIC=true`일 때 게시 날짜의 한국 요일로 아래 곡을 선택합니다. 음악 음량은 35/100이며, 영상은 기존 10초와 모든 프레임을 보존합니다. Meta 음악 합성을 위해 영상에 무음 AAC 스테레오 트랙을 추가하고, 게시 요청에 `audio_configuration`으로 곡을 연결합니다. 선택한 곡은 날짜별 게시 상태에 저장되어 재시도해도 바뀌지 않습니다.
+
+|요일|곡|아티스트|
+|---|---|---|
+|월|Peaceful Piano|Dr. Pheel|
+|화|Lofi Love|Ella Joy Meir|
+|수|Piano Dreams|Ella Joy Meir|
+|목|Lofi Memoir|Adam Griffith|
+|금|Piano In Bloom (Instrumental)|Ella Joy Meir|
+|토|Lofi Magic|Ella Joy Meir|
+|일|Piano Lullaby|Ella Joy Meir|
+
+`Test seven reel soundtracks`는 7곡을 실제 Instagram 미게시 컨테이너에 연결하여 `FINISHED`까지 검사합니다. `media_publish`를 호출하지 않으므로 테스트 릴스는 공개하지 않습니다. Meta는 미게시 상태에서 음악이 합쳐진 영상 미리보기를 제공하지 않습니다. 음악 사용 가능 여부는 이후 변경될 수 있으며, 처리 오류 시 임의 다른 음악으로 바꾸거나 중복 게시하지 않습니다. 끄려면 daily.yml의 `REEL_MUSIC`을 `false`로 바꿉니다. 기존 게시물과 스토리 흐름은 유지됩니다.
+
 대상 Instagram: **@daily_ohaasa**. 월~금은 ABC 오하아사, 토·일은 TV아사히 고고별점.
 공휴일도 요일을 기준으로 선택합니다. 표지 제목은 언제나 `오하아사`입니다.
 
