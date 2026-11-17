@@ -8,6 +8,7 @@ import subprocess
 
 from PIL import Image, ImageDraw, ImageFont
 import imageio_ffmpeg
+from .music import selected_track, prepare_audio_stream
 
 INK = '#49443e'
 ACCENT = '#8c9da5'
@@ -181,6 +182,8 @@ def render_reel(data,out):
     count=sum(1 for _ in reader)
     if meta['size']!=(1080,1920) or count!=300 or abs(meta['duration']-10)>.05:
         raise ValueError('Video verification failed.')
+    if selected_track(data['date']):
+        prepare_audio_stream(path)
     return path
 
 
