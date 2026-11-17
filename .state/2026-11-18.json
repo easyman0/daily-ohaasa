@@ -154,5 +154,12 @@
     "status": "published",
     "media_id": "17894961267685349",
     "published_at": "2026-11-17T22:43:52.428682+00:00"
+  },
+  "reel": {
+    "music": {
+      "audio_id": "445556344868453",
+      "title": "Piano Dreams",
+      "artist": "Ella Joy Meir"
+    }
   }
 }
