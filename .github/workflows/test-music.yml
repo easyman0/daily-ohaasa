@@ -1,7 +1,7 @@
 name: Test seven reel soundtracks
 on: workflow_dispatch
 permissions:
-  contents: read
+  contents: write
 jobs:
   music:
     runs-on: ubuntu-latest
@@ -24,7 +24,8 @@ jobs:
       - name: Validate all seven tracks on actual reel containers
         run: |
           python -u - <<'PY'
-          import os, json
+          import os, json, subprocess
+          import requests, imageio_ffmpeg
           from datetime import datetime
           from zoneinfo import ZoneInfo
           from pathlib import Path
@@ -39,9 +40,20 @@ jobs:
               raise SystemExit('Today must have a published reel to use as the test source.')
           results=[]
           Path('build').mkdir(exist_ok=True)
+          print('Checking original silent video without music',flush=True)
+          baseline=api.create(media_type='REELS',video_url=state['video'],share_to_feed='false')
+          print('Baseline:',api.wait(baseline),flush=True)
+          # Some mixing pipelines require a source audio stream. Add silent AAC
+          # without changing any video frames, then test the exact music mix.
+          response=requests.get(state['video'],timeout=(15,90))
+          response.raise_for_status()
+          Path('build/source.mp4').write_bytes(response.content)
+          target=Path('build/reel-aac.mp4')
+          subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(),'-y','-i','build/source.mp4','-f','lavfi','-i','anullsrc=channel_layout=stereo:sample_rate=48000','-map','0:v:0','-map','1:a:0','-c:v','copy','-c:a','aac','-b:a','128k','-shortest','-movflags','+faststart',str(target)],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+          video=GitHub().release_assets('music-test-'+os.environ['GITHUB_RUN_ID'],[target])[target.name]
           for track in TRACKS:
               print('Testing:',track['title'],flush=True)
-              container=api.create(media_type='REELS',video_url=state['video'],share_to_feed='false',audio_configuration=audio_configuration(track))
+              container=api.create(media_type='REELS',video_url=video,share_to_feed='false',audio_configuration=audio_configuration(track))
               result=dict(track,container=container,status='CREATED')
               results.append(result)
               Path('build/music-test.json').write_text(json.dumps(results,indent=2))
@@ -51,14 +63,19 @@ jobs:
                   detail=api.request('GET',container,params={'fields':'status_code,status'})
                   message=str(detail.get('status','')).replace(os.environ['IG_ACCESS_TOKEN'],'[redacted]').replace(os.environ['IG_USER_ID'],'[account]')
                   print('Container diagnostic:',detail.get('status_code'),message[:1000],flush=True)
-                  raise SystemExit('Music container processing failed; automatic music remains disabled.')
+                  result['status']='ERROR'
+                  result['diagnostic']=message[:1000]
+                  Path('build/music-test.json').write_text(json.dumps(results,indent=2))
+                  continue
               Path('build/music-test.json').write_text(json.dumps(results,indent=2))
               if result['status']!='FINISHED':raise SystemExit('Unexpected test container state')
               print('PASS:',track['title'],result['status'],flush=True)
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
-              f.write('# Seven soundtrack tests passed\n\nAll seven actual Reel containers with audio_configuration reached FINISHED. No media_publish request was sent. Meta does not provide combined audio/video previews for unpublished containers.\n\n|Day|Track|Status|\n|---|---|---|\n')
+              f.write('# Soundtrack compatibility results\n\nActual Reel containers with audio_configuration tested. No media_publish request was sent. Meta does not provide combined audio/video previews for unpublished containers.\n\n|Day|Track|Status|\n|---|---|---|\n')
               for day,result in zip(('Mon','Tue','Wed','Thu','Fri','Sat','Sun'),results):
                   f.write(f"|{day}|{result['title']}|{result['status']}|\n")
+          if any(r['status']!='FINISHED' for r in results):
+              raise SystemExit('Some soundtracks failed; automatic music remains disabled.')
           PY
       - uses: actions/upload-artifact@v4
         if: always()
