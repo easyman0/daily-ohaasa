@@ -5,6 +5,7 @@ import time
 from datetime import datetime, timezone
 import requests
 from cryptography.fernet import Fernet
+from .music import selected_track, audio_configuration
 
 
 def login_mode():
@@ -116,8 +117,14 @@ def publish_kind(api,state,kind,save):
             for child in children: api.wait(child)
             container=api.create(media_type='CAROUSEL',children=','.join(children),caption=state['captions'][kind])
         else:
-            container=api.create(media_type='REELS',video_url=state['video'],
-                                 caption=state['captions'][kind],share_to_feed='false')
+            if 'music' not in item:
+                item['music']=selected_track(state.get('date'))
+                save(state)
+            data=dict(media_type='REELS',video_url=state['video'],
+                      caption=state['captions'][kind],share_to_feed='false')
+            if item['music']:
+                data['audio_configuration']=audio_configuration(item['music'])
+            container=api.create(**data)
         item['container']=container
         save(state)
     api.wait(item['container'])
