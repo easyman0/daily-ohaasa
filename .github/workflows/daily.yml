@@ -33,6 +33,7 @@ jobs:
       RUN_MODE: ${{ github.event_name == 'schedule' && 'publish' || inputs.mode }}
       PREVIEW_SOURCE: ${{ inputs.source || 'auto' }}
       AUTO_PUBLISH: ${{ vars.AUTO_PUBLISH }}
+      REEL_MUSIC: 'true'
       GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
       IG_API_VERSION: ${{ vars.IG_API_VERSION }}
       IG_LOGIN_MODE: ${{ vars.IG_LOGIN_MODE || 'unified' }}
