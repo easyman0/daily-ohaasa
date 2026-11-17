@@ -1,0 +1,62 @@
+name: Test seven reel soundtracks
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  music:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+      IG_USER_ID: ${{ secrets.IG_USER_ID }}
+      IG_USERNAME: daily_ohaasa
+      IG_LOGIN_MODE: ${{ vars.IG_LOGIN_MODE || 'unified' }}
+      IG_API_VERSION: ${{ vars.IG_API_VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Validate all seven tracks on actual reel containers
+        run: |
+          python -u - <<'PY'
+          import os, json
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+          from pathlib import Path
+          from ohaasa.instagram import Instagram
+          from ohaasa.github import GitHub
+          from ohaasa.music import TRACKS, audio_configuration
+          api=Instagram(os.environ['IG_ACCESS_TOKEN'])
+          api.verify_account()
+          day=str(datetime.now(ZoneInfo('Asia/Seoul')).date())
+          state,_=GitHub().read(f'.state/{day}.json')
+          if state.get('date')!=day or state.get('reel',{}).get('status')!='published':
+              raise SystemExit('Today must have a published reel to use as the test source.')
+          results=[]
+          Path('build').mkdir(exist_ok=True)
+          for track in TRACKS:
+              print('Testing:',track['title'],flush=True)
+              container=api.create(media_type='REELS',video_url=state['video'],share_to_feed='false',audio_configuration=audio_configuration(track))
+              result=dict(track,container=container,status='CREATED')
+              results.append(result)
+              Path('build/music-test.json').write_text(json.dumps(results,indent=2))
+              result['status']=api.wait(container)
+              Path('build/music-test.json').write_text(json.dumps(results,indent=2))
+              if result['status']!='FINISHED':raise SystemExit('Unexpected test container state')
+              print('PASS:',track['title'],result['status'],flush=True)
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('# Seven soundtrack tests passed\n\nAll seven actual Reel containers with audio_configuration reached FINISHED. No media_publish request was sent. Meta does not provide combined audio/video previews for unpublished containers.\n\n|Day|Track|Status|\n|---|---|---|\n')
+              for day,result in zip(('Mon','Tue','Wed','Thu','Fri','Sat','Sun'),results):
+                  f.write(f"|{day}|{result['title']}|{result['status']}|\n")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: music-container-tests
+          path: build/music-test.json
+          retention-days: 3
