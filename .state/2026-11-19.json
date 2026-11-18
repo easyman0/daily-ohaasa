@@ -163,6 +163,9 @@
       "artist": "Adam Griffith"
     },
     "container": "17956961742290988",
-    "attempted": true
+    "attempted": true,
+    "status": "published",
+    "media_id": "18135551968689947",
+    "published_at": "2026-11-18T22:43:31.922392+00:00"
   }
 }
