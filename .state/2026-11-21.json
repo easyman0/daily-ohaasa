@@ -165,5 +165,12 @@
     "status": "published",
     "media_id": "18136533013666056",
     "published_at": "2026-11-20T22:36:38.035779+00:00"
+  },
+  "reel": {
+    "music": {
+      "audio_id": "496700212782181",
+      "title": "Lofi Magic",
+      "artist": "Ella Joy Meir"
+    }
   }
 }
