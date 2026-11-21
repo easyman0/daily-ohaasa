@@ -178,5 +178,8 @@
     "media_id": "18129925739484668",
     "published_at": "2026-11-21T22:30:25.120063+00:00"
   },
-  "story_image": "https://github.com/easyman0/daily-ohaasa/releases/download/daily-2026-11-22/story.jpg"
+  "story_image": "https://github.com/easyman0/daily-ohaasa/releases/download/daily-2026-11-22/story.jpg",
+  "story": {
+    "container": "17957310594290988"
+  }
 }
