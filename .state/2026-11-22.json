@@ -165,5 +165,12 @@
     "status": "published",
     "media_id": "17950011960358279",
     "published_at": "2026-11-21T22:29:46.470166+00:00"
+  },
+  "reel": {
+    "music": {
+      "audio_id": "771177030946350",
+      "title": "Piano Lullaby",
+      "artist": "Ella Joy Meir"
+    }
   }
 }
