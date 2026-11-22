@@ -15,7 +15,8 @@ KST=ZoneInfo('Asia/Seoul')
 
 
 def publish_window(now):
-    return time(7) <= now.astimezone(KST).time().replace(tzinfo=None) < time(10,30)
+    # 06:00–07:30 scheduled starts; allow preparation to finish before 08:00.
+    return time(6) <= now.astimezone(KST).time().replace(tzinfo=None) < time(8)
 
 
 def run(args):
@@ -32,7 +33,7 @@ def run(args):
         if os.getenv('AUTO_PUBLISH')!='true':
             raise ValueError('AUTO_PUBLISH must be true after setup verification.')
         if not publish_window(now):
-            raise ValueError('Publishing is restricted to 07:00–10:30 KST.')
+            raise ValueError('Publishing is restricted to 06:00–08:00 KST (including completion grace).')
         github=GitHub()
         github.ensure_public()
         state,_=github.read(f'.state/{day}.json')
@@ -53,7 +54,7 @@ def run(args):
                 try:
                     source=fetch(day,None if args.source=='auto' else args.source)
                 except NotReady:
-                    if live and now.hour<9:
+                    if live and now.time().replace(tzinfo=None)<time(7,30):
                         print('Today’s source is not ready. No post was made; next scheduled run will retry.')
                         return
                     raise
