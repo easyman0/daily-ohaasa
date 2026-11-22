@@ -28,8 +28,11 @@ class Sources(unittest.TestCase):
         self.assertEqual(source_for(date(2026,11,6)),'ohaasa')
         self.assertEqual(source_for(date(2026,11,7)),'gogo')
         self.assertEqual(source_for(date(2026,11,8)),'gogo')
-        self.assertTrue(publish_window(datetime(2026,11,6,22,0,tzinfo=timezone.utc)))
-        self.assertFalse(publish_window(datetime(2026,11,6,21,59,tzinfo=timezone.utc)))
+        self.assertTrue(publish_window(datetime(2026,11,6,21,0,tzinfo=timezone.utc)))
+        self.assertFalse(publish_window(datetime(2026,11,6,20,59,tzinfo=timezone.utc)))
+        self.assertTrue(publish_window(datetime(2026,11,6,22,30,tzinfo=timezone.utc)))
+        self.assertTrue(publish_window(datetime(2026,11,6,22,59,tzinfo=timezone.utc)))
+        self.assertFalse(publish_window(datetime(2026,11,6,23,0,tzinfo=timezone.utc)))
 
     def test_stale_abc(self):
         with self.assertRaises(NotReady): parse_abc(json.dumps(abc_fixture()),date(2026,11,7))
