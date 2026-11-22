@@ -153,5 +153,12 @@
     "status": "published",
     "media_id": "18148580371603713",
     "published_at": "2026-11-22T21:31:33.887344+00:00"
+  },
+  "reel": {
+    "music": {
+      "audio_id": "2477944699150252",
+      "title": "Peaceful Piano",
+      "artist": "Dr. Pheel"
+    }
   }
 }
