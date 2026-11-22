@@ -9,7 +9,8 @@ import urllib.error
 now=datetime.now(timezone(timedelta(hours=9)))
 needed=True
 if os.getenv('RUN_MODE')=='publish':
-    if not 7 <= now.hour < 10:
+    # Allow the final 07:30 scheduled run to start after a short queue delay.
+    if not 6 <= now.hour < 8:
         needed=False
     else:
         repo=os.environ['GITHUB_REPOSITORY']
