@@ -169,6 +169,9 @@
   "story_image": "https://github.com/easyman0/daily-ohaasa/releases/download/daily-2026-11-23/story.jpg",
   "story": {
     "container": "17957440656290988",
-    "attempted": true
+    "attempted": true,
+    "status": "published",
+    "media_id": "18078484979740731",
+    "published_at": "2026-11-23T06:33:07.044508+09:00"
   }
 }
