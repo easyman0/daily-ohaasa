@@ -153,5 +153,12 @@
     "status": "published",
     "media_id": "18107529461534901",
     "published_at": "2026-11-23T21:40:38.289401+00:00"
+  },
+  "reel": {
+    "music": {
+      "audio_id": "624445130386044",
+      "title": "Lofi Love",
+      "artist": "Ella Joy Meir"
+    }
   }
 }
