@@ -154,5 +154,12 @@
     "status": "published",
     "media_id": "18154877830553621",
     "published_at": "2026-11-25T21:47:47.722410+00:00"
+  },
+  "reel": {
+    "music": {
+      "audio_id": "1213218503365575",
+      "title": "Lofi Memoir",
+      "artist": "Adam Griffith"
+    }
   }
 }
