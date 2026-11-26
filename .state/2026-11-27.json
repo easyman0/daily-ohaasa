@@ -153,5 +153,12 @@
     "status": "published",
     "media_id": "17926288803453350",
     "published_at": "2026-11-26T21:42:04.081218+00:00"
+  },
+  "reel": {
+    "music": {
+      "audio_id": "3012618439128205",
+      "title": "Piano In Bloom (Instrumental)",
+      "artist": "Ella Joy Meir"
+    }
   }
 }
