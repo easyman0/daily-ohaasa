@@ -179,6 +179,7 @@
   },
   "story_image": "https://github.com/easyman0/daily-ohaasa/releases/download/daily-2026-11-28/story.jpg",
   "story": {
-    "container": "17958044772290988"
+    "container": "17958044772290988",
+    "attempted": true
   }
 }
